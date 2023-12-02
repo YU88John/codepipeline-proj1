@@ -8,7 +8,7 @@ resource "aws_vpc" "lab-vpc" {
   }
 }
 
-# Create private subnets
+# Create subnets
 resource "aws_subnet" "lab-subnets" {
   count                   = 2
   vpc_id                  = aws_vpc.lab-vpc.id
@@ -24,6 +24,28 @@ resource "aws_subnet" "lab-subnets" {
 # Create internet gateway - since this is custom vpc
 resource "aws_internet_gateway" "lab-igw" {
   vpc_id = aws_vpc.lab-vpc.id
+}
+
+# Create route table for public subnets
+resource "aws_route_table" "lab-public-route-table" {
+  count = 2
+  vpc_id = aws_vpc.lab-vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.lab-igw.id
+  }
+
+  tags = {
+    Name = "Public-Route-Table-${count.index + 1}"
+  }
+}
+
+# Associate public route table with public subnets
+resource "aws_route_table_association" "lab-public-subnet-association" {
+  count          = 2
+  subnet_id      = aws_subnet.lab-subnets[count.index].id
+  route_table_id = aws_route_table.lab-public-route-table[count.index].id
 }
 
 # security group for alb
