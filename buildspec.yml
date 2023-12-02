@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: latest
+    commands:
+      - echo "Installing dependencies"
+      - cd /app && npm install
+      - echo "Installing pm2 dependencies..."
+      - npm install -g pm2
+  pre_build:
+    commands:
+      - echo "Build is initiated"
+  build:
+    commands:
+      - echo "Build started"
+      - echo "Compiling the Node.js code"
+      - cd /app && pm2 start app.js
+  post_build:
+    commands:
+      - echo "Build completed"
+
+artifacts:
+  files:
+    - /app/app.js
+    - /app/package.json
