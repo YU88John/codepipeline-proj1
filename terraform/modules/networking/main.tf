@@ -8,23 +8,24 @@ resource "aws_vpc" "lab-vpc" {
   }
 }
 
+# Create internet gateway - since this is custom vpc
+resource "aws_internet_gateway" "lab-igw" {
+  vpc_id = aws_vpc.lab-vpc.id
+}
+
 # Create subnets
 resource "aws_subnet" "lab-subnets" {
   count                   = 2
   vpc_id                  = aws_vpc.lab-vpc.id
   cidr_block              = count.index == 0 ? "10.0.1.0/24" : "10.0.2.0/24"
   availability_zone       = count.index == 0 ? var.az-a : var.az-b
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = true  # Make both subnets public
 
   tags = {
     Name = "Subnet-${count.index + 1}"
   }
 }
 
-# Create internet gateway - since this is custom vpc
-resource "aws_internet_gateway" "lab-igw" {
-  vpc_id = aws_vpc.lab-vpc.id
-}
 
 # Create route table for public subnets
 resource "aws_route_table" "lab-public-route-table" {
@@ -59,6 +60,14 @@ resource "aws_security_group" "lab-sg-alb" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Allow everything"
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -101,6 +110,30 @@ resource "aws_security_group" "lab-asg-sg" {
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  egress {
+    description = "Code deploy https handshake"
+    from_port = 443
+    to_port = 443
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "RDS connection handshake"
+    from_port = 3306
+    to_port = 3306
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "health check reply"
+    from_port = 3000
+    to_port = 3000
+    protocol = "tcp"
+    security_groups = [aws_security_group.lab-sg-alb.id]
+  }
     
 }
 
@@ -124,8 +157,8 @@ resource "aws_lb_target_group" "lab-alb-tg" {
   vpc_id      = aws_vpc.lab-vpc.id
 
   health_check {
-    interval            = 30
-    path = "/health"
+    interval            = 15
+    path                = "/health"
     port                = "traffic-port"
     protocol            = "HTTP"
     timeout             = 10
@@ -143,27 +176,9 @@ resource "aws_lb_listener" "lab-alb-lsnr" {
   protocol          = "HTTP"
 
   default_action {
-    type = "fixed-response"
-    fixed_response {
-      content_type = "text/plain"
-      status_code  = "200"
-      message_body = "OK"
-    }
-  }
-}
-
-// Create listener rule which will match incoming traffic 
-resource "aws_lb_listener_rule" "lab-alb-lsnr-rule" {
-  listener_arn = aws_lb_listener.lab-alb-lsnr.arn
-
-  action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.lab-alb-tg.arn
   }
-
-  condition {
-    path_pattern {
-      values = ["/"]
-    }
-  }
 }
+
+

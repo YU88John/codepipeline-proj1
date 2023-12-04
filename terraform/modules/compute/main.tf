@@ -40,25 +40,23 @@ resource "aws_launch_template" "lab-lt" {
    iam_instance_profile {
     name = aws_iam_instance_profile.lab_code_deploy_instance_profile.name
   }
-  user_data = filebase64("./modules/compute/code-deploy-agent.sh")
   vpc_security_group_ids = [var.asg_id] 
 }
 
 resource "aws_autoscaling_group" "lab-asg" {
-  depends_on = [ var.tg_dependency ]
+  depends_on = [var.tg_dependency]
 
   desired_capacity = 4
   max_size         = 6
   min_size         = 2
-  
+
   launch_template {
     id      = aws_launch_template.lab-lt.id
     version = "${aws_launch_template.lab-lt.latest_version}"
   }
 
   vpc_zone_identifier = var.subnet_ids
-  target_group_arns = [var.tg_arn_asg]
-  
+  target_group_arns   = [var.tg_arn_asg]
 
   tag {
     key                 = "Name"
@@ -66,3 +64,35 @@ resource "aws_autoscaling_group" "lab-asg" {
     propagate_at_launch = true
   }
 }
+
+/*
+
+# CodeDeploy Application
+resource "aws_codedeploy_application" "lab-codedeploy-app" {
+  name     = "LabCodeDeployApp"
+  compute_platform = "Server"
+
+  deployment_config_name = "CodeDeployDefault.OneAtATime" # You can choose a different deployment configuration
+}
+
+resource "aws_codedeploy_deployment_group" "lab-codedeploy-deployment-group" {
+  app_name     = aws_codedeploy_application.lab-codedeploy-app.name
+  deployment_group_name = "LabCodeDeployDeploymentGroup"
+  service_role_arn = "arn:aws:iam::656967617759:role/my-node-iam-role"  # Use your existing CodeDeploy service role ARN
+  autoscaling_groups = [aws_autoscaling_group.lab-asg.name]
+
+  # Specify your artifact details, including the location of appspec.yaml
+  revision {
+    revision_type    = "S3"
+    s3_location {
+      bucket = "your-s3-bucket-name"
+      key    = "path/to/your/artifact.zip"
+      bundle_type = "zip"  # Specify the bundle type if it's different
+    }
+  }
+}
+
+*/
+
+
+
