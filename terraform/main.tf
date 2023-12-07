@@ -13,6 +13,7 @@ module "compute" {
   asg_id        = module.networking.asg_security_group_id
   tg_arn_asg    = module.networking.tg_arn
   tg_dependency = module.networking.tg_creation
+  tg_name = module.networking.tg_name4cd
 }
 
 # Call the database module

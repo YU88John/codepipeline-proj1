@@ -19,3 +19,7 @@ variable "tg_arn_asg" {
 variable "tg_dependency" {
   description = "For explicit dependency of target group"
 }
+
+variable "tg_name" {
+  description = "Name of target group for code deploy configuration"
+}

@@ -65,34 +65,28 @@ resource "aws_autoscaling_group" "lab-asg" {
   }
 }
 
-/*
 
 # CodeDeploy Application
-resource "aws_codedeploy_application" "lab-codedeploy-app" {
+resource "aws_codedeploy_app" "lab-codedeploy-app" {
   name     = "LabCodeDeployApp"
   compute_platform = "Server"
-
-  deployment_config_name = "CodeDeployDefault.OneAtATime" # You can choose a different deployment configuration
 }
 
 resource "aws_codedeploy_deployment_group" "lab-codedeploy-deployment-group" {
-  app_name     = aws_codedeploy_application.lab-codedeploy-app.name
+  app_name     = aws_codedeploy_app.lab-codedeploy-app.name
+  deployment_config_name = "CodeDeployDefault.HalfAtATime" # You can choose a different deployment configuration
   deployment_group_name = "LabCodeDeployDeploymentGroup"
   service_role_arn = "arn:aws:iam::656967617759:role/my-node-iam-role"  # Use your existing CodeDeploy service role ARN
   autoscaling_groups = [aws_autoscaling_group.lab-asg.name]
 
-  # Specify your artifact details, including the location of appspec.yaml
-  revision {
-    revision_type    = "S3"
-    s3_location {
-      bucket = "your-s3-bucket-name"
-      key    = "path/to/your/artifact.zip"
-      bundle_type = "zip"  # Specify the bundle type if it's different
+   # Specify the load balancer and target group information
+  load_balancer_info {
+    target_group_info {
+      name = var.tg_name
     }
   }
 }
 
-*/
 
 
 

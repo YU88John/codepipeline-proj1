@@ -5,7 +5,7 @@ output "vpc_id" {
 }
 
 output "subnet_ids" {
-  value = aws_subnet.lab-subnets[*].id
+  value = aws_subnet.lab-private-subnets[*].id
 }
 
 output "alb_security_group_id" {
@@ -22,4 +22,8 @@ output "tg_arn" {
 
 output "tg_creation" {
   value = aws_lb_target_group.lab-alb-tg
+}
+
+output "tg_name4cd" {
+  value = aws_lb_target_group.lab-alb-tg.name
 }
