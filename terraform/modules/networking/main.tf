@@ -1,6 +1,7 @@
 # modules/networking/main.tf
+# resources: VPC, Subnets, IGW, NAT GW, ALB
 
-# Create VPC that we will use for this lab
+# Create custom VPC that we will use for this lab
 resource "aws_vpc" "lab-vpc" {
   cidr_block = "10.0.0.0/16"
   tags = {
@@ -13,7 +14,7 @@ resource "aws_internet_gateway" "lab-igw" {
   vpc_id = aws_vpc.lab-vpc.id
 }
 
-# Create Elastic IPs for NAT gateway
+# Create Elastic IPs for NAT gateways
 resource "aws_eip" "lab_nat_eip_a" {
 }
 
@@ -32,7 +33,7 @@ resource "aws_nat_gateway" "lab_nat_gateway_b" {
   subnet_id     = aws_subnet.lab-public-subnets[1].id  # Specify the public subnet where the NAT gateway should be created
 }
 
-# Update private subnet route tables to use NAT gateways for internet access
+# Create route table for private subnetss - NAT for internet access
 resource "aws_route_table" "private_route_table_a" {
   vpc_id = aws_vpc.lab-vpc.id
 
@@ -51,45 +52,6 @@ resource "aws_route_table" "private_route_table_b" {
   }
 }
 
-
-# Create public subnets
-resource "aws_subnet" "lab-public-subnets" {
-  count                   = 2
-  vpc_id                  = aws_vpc.lab-vpc.id
-  cidr_block              = count.index == 0 ? "10.0.1.0/24" : "10.0.2.0/24"
-  availability_zone       = count.index == 0 ? var.az-a : var.az-b
-  map_public_ip_on_launch = true  # Make both subnets public
-
-  tags = {
-    Name = "Public-Subnet-${count.index + 1}"
-  }
-}
-
-# Create private subnets
-resource "aws_subnet" "lab-private-subnets" {
-  count                   = 2
-  vpc_id                  = aws_vpc.lab-vpc.id
-  cidr_block              = count.index == 0 ? "10.0.3.0/24" : "10.0.4.0/24"
-  availability_zone       = count.index == 0 ? var.az-a : var.az-b
-  map_public_ip_on_launch = false  # Make both subnets private
-
-  tags = {
-    Name = "Private-Subnet-${count.index + 1}"
-  }
-}
-
-# Associate private route table A with private subnet A
-resource "aws_route_table_association" "private_subnet_association_a" {
-  subnet_id      = aws_subnet.lab-private-subnets[0].id
-  route_table_id = aws_route_table.private_route_table_a.id
-}
-
-# Associate private route table B with private subnet B
-resource "aws_route_table_association" "private_subnet_association_b" {
-  subnet_id      = aws_subnet.lab-private-subnets[1].id
-  route_table_id = aws_route_table.private_route_table_b.id
-}
-
 # Create route table for public subnets
 resource "aws_route_table" "lab-public-route-table" {
   count = 2
@@ -105,6 +67,58 @@ resource "aws_route_table" "lab-public-route-table" {
   }
 }
 
+# Create public subnets
+resource "aws_subnet" "lab-public-subnets" {
+  count                   = 2
+  vpc_id                  = aws_vpc.lab-vpc.id
+  cidr_block              = count.index == 0 ? "10.0.1.0/24" : "10.0.2.0/24"
+  availability_zone       = count.index == 0 ? var.az-a : var.az-b
+  map_public_ip_on_launch = true  # Make both subnets public
+
+  tags = {
+    Name = "Public-Subnet-${count.index + 1}"
+  }
+}
+
+# Create private subnets for instances
+resource "aws_subnet" "lab-private-subnets" {
+  count                   = 2
+  vpc_id                  = aws_vpc.lab-vpc.id
+  cidr_block              = count.index == 0 ? "10.0.3.0/24" : "10.0.4.0/24"
+  availability_zone       = count.index == 0 ? var.az-a : var.az-b
+  map_public_ip_on_launch = false  # Make both subnets private
+
+  tags = {
+    Name = "Private-Subnet-${count.index + 1}"
+  }
+}
+
+# Create private subnets for rds
+resource "aws_subnet" "lab-private-subnets-rds" {
+  count                   = 2
+  vpc_id                  = aws_vpc.lab-vpc.id
+  cidr_block              = count.index == 0 ? "10.0.5.0/28" : "10.0.6.0/28"
+  availability_zone       = count.index == 0 ? var.az-a : var.az-b
+  map_public_ip_on_launch = false  # Make both subnets private
+
+  tags = {
+    Name = "RDS-Private-Subnet-${count.index + 1}"
+  }
+}
+
+# Associate private route table A with private subnet A
+resource "aws_route_table_association" "private_subnet_association_a" {
+  subnet_id      = aws_subnet.lab-private-subnets[0].id
+  route_table_id = aws_route_table.private_route_table_a.id
+}
+
+# Associate private route table B with private subnet B
+resource "aws_route_table_association" "private_subnet_association_b" {
+  subnet_id      = aws_subnet.lab-private-subnets[1].id
+  route_table_id = aws_route_table.private_route_table_b.id
+}
+
+
 # Associate public route table with public subnets
 resource "aws_route_table_association" "lab-public-subnet-association" {
   count          = 2
@@ -112,7 +126,9 @@ resource "aws_route_table_association" "lab-public-subnet-association" {
   route_table_id = aws_route_table.lab-public-route-table[count.index].id
 }
 
-# security group for alb
+# Application Load Balancer configurations
+
+# Create security group for alb
 resource "aws_security_group" "lab-sg-alb" {
   name        = "alb-sg"
   description = "Security group for application load balancer"
@@ -136,7 +152,7 @@ resource "aws_security_group" "lab-sg-alb" {
 
 }
 
-# security group for instances - asg launch template
+# Create security group for asg instances 
 resource "aws_security_group" "lab-asg-sg" {
   name = "asg-template-sg"
   description = "Security group for auto scaling group"
@@ -148,30 +164,6 @@ resource "aws_security_group" "lab-asg-sg" {
     to_port = 3000
     protocol = "tcp"
     security_groups = [aws_security_group.lab-sg-alb.id]
-  }
-
-  ingress {
-    description = "allow alb traffic to node app"
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
-    security_groups = [aws_security_group.lab-sg-alb.id]
-  }
-
-  ingress {
-    description = "allow ssh access"
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "allow ui access"
-    from_port = 3000
-    to_port = 3000
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -200,7 +192,7 @@ resource "aws_security_group" "lab-asg-sg" {
     
 }
 
-// Create Application load balancer 
+# Create Application load balancer 
 resource "aws_lb" "lab-alb" {
   name               = "lab-application-lb"
   internal           = false
@@ -211,7 +203,7 @@ resource "aws_lb" "lab-alb" {
   depends_on = [aws_internet_gateway.lab-igw]
 }
 
-// Create target group ALB will hit
+# Create target group ALB will route traffic
 resource "aws_lb_target_group" "lab-alb-tg" {
   name        = "lab-target-group"
   port        = 3000
@@ -219,6 +211,7 @@ resource "aws_lb_target_group" "lab-alb-tg" {
   target_type = "instance"
   vpc_id      = aws_vpc.lab-vpc.id
 
+# my node app replies HTTP "200" on /health path
   health_check {
     interval            = 15
     path                = "/health"
@@ -232,7 +225,7 @@ resource "aws_lb_target_group" "lab-alb-tg" {
 }
 
 
-// Create listener for alb
+# Create listener for alb
 resource "aws_lb_listener" "lab-alb-lsnr" {
   load_balancer_arn = aws_lb.lab-alb.arn
   port              = 80

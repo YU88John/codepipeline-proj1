@@ -23,3 +23,7 @@ variable "tg_dependency" {
 variable "tg_name" {
   description = "Name of target group for code deploy configuration"
 }
+
+variable "alb_name" {
+  description = "Name of application load balancer for code deploy configuration"
+}

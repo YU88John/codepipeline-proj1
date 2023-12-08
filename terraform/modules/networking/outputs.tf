@@ -27,3 +27,15 @@ output "tg_creation" {
 output "tg_name4cd" {
   value = aws_lb_target_group.lab-alb-tg.name
 }
+
+output "rds_subnet_ids" {
+  value = aws_subnet.lab-private-subnets-rds[*].id
+}
+
+output "alb_name" {
+  value = aws_lb.lab-alb.name
+}
+
+output "alb_arn" {
+  value = aws_lb.lab-alb.arn
+}
