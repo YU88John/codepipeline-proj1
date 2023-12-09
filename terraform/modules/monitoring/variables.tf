@@ -7,5 +7,10 @@ variable "asg_dependency" {
 }
 
 variable "alb_arn" {
-  description = "ALB arn for the dashboard"
+  description = "ALB arn for the dashboard widget"
+}
+
+variable "rds_instance_identifier" {
+  description = "RDS instance identifier for dashboard widget"
+  default = "lab-mysql-db" # we will jus hardcode as we already specified in db tf
 }

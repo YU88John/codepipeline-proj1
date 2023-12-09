@@ -108,8 +108,8 @@ resource "aws_codedeploy_deployment_group" "lab-codedeploy-deployment-group" {
   autoscaling_groups = [aws_autoscaling_group.lab-asg.name]
 
   deployment_style {
+    deployment_type = "IN_PLACE"
     deployment_option = "WITH_TRAFFIC_CONTROL"
-    deployment_type   = "BLUE_GREEN"
   }
 
    # Specify the load balancer and target group information - for draining during deployment

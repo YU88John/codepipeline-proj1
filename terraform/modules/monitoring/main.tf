@@ -4,10 +4,21 @@ resource "aws_cloudwatch_dashboard" "lab-dashboard" {
 
   dashboard_body = jsonencode({
     widgets = [
-      {
-        type   = "metric"
+        {
+        type   = "text"
         x      = 0
         y      = 0
+        width  = 12
+        height = 3
+
+        properties = {
+          markdown = "My Lab Dashboard for EC2, ALB, and RDS"
+        }
+      },
+      {
+        type   = "metric"
+        x      = 0 
+        y      = 7
         width  = 12
         height = 6
 
@@ -22,17 +33,6 @@ resource "aws_cloudwatch_dashboard" "lab-dashboard" {
           stat   = "Average"
           region = "us-east-1"
           title  = "Auto Scaling Group - Resource Utilization"
-        }
-      },
-      {
-        type   = "text"
-        x      = 0
-        y      = 7
-        width  = 3
-        height = 3
-
-        properties = {
-          markdown = "My Lab Dashboard for instances and ALB"
         }
       },
       {
@@ -73,6 +73,26 @@ resource "aws_cloudwatch_dashboard" "lab-dashboard" {
           title  = "ALB - Request and HTTP Code Counts",
         },
       },
-     ]
+      {
+        type   = "metric"
+        x      = 0
+        y      = 18
+        width  = 12
+        height = 6
+
+        properties = {
+          metrics = [
+            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "${var.rds_instance_identifier}"],
+            ["AWS/RDS", "FreeableMemory", "DBInstanceIdentifier", "${var.rds_instance_identifier}"],
+            ["AWS/RDS", "ReadIOPS", "DBInstanceIdentifier", "${var.rds_instance_identifier}"],
+            ["AWS/RDS", "WriteIOPS", "DBInstanceIdentifier", "${var.rds_instance_identifier}"],
+          ],
+          period = 300,
+          stat   = "Average",
+          region = "us-east-1",
+          title  = "RDS - Resource Utilization",
+        },
+      },
+    ]
   })
 }
