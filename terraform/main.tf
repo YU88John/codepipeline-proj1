@@ -31,6 +31,8 @@ module "monitoring" {
   asg_id = module.compute.asg_id
   asg_dependency = module.compute.asg_dependency
   alb_arn = module.networking.alb_arn
+  alb_dependency = module.networking.alb_dependency
+  rds_dependency = module.database.rds_dependency
 }
 
 # Output some useful information if needed

@@ -39,3 +39,7 @@ output "alb_name" {
 output "alb_arn" {
   value = aws_lb.lab-alb.arn
 }
+
+output "alb_dependency" {
+  value = aws_lb.lab-alb
+}

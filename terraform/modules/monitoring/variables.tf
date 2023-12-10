@@ -3,7 +3,15 @@ variable "asg_id" {
 }
 
 variable "asg_dependency" {
-  description = "dependency for cloudwatch dashboard"
+  description = "dependency of asg creation"
+}
+
+variable "alb_dependency" {
+  description = "dependency of application load balancer creation"
+}
+
+variable "rds_dependency" {
+  description = "dependency of rds db creation"
 }
 
 variable "alb_arn" {

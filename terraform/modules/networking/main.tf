@@ -135,9 +135,17 @@ resource "aws_security_group" "lab-sg-alb" {
   vpc_id      = aws_vpc.lab-vpc.id
 
   ingress {
-    description = "Allow user traffic"
+    description = "Allow http user traffic"
     from_port   = 80
     to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Allow user traffic"
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -225,7 +233,7 @@ resource "aws_lb_target_group" "lab-alb-tg" {
 }
 
 
-# Create listener for alb
+# Create listener for alb on port 80
 resource "aws_lb_listener" "lab-alb-lsnr" {
   load_balancer_arn = aws_lb.lab-alb.arn
   port              = 80
@@ -236,5 +244,20 @@ resource "aws_lb_listener" "lab-alb-lsnr" {
     target_group_arn = aws_lb_target_group.lab-alb-tg.arn
   }
 }
+
+# Create listener for alb on port 443 + specify certificate
+resource "aws_lb_listener" "lab-alb-lsnr-https" {
+  load_balancer_arn = aws_lb.lab-alb.arn
+  port              = 443
+  protocol          = "HTTPS"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.lab-alb-tg.arn
+  }
+
+  certificate_arn = "arn:aws:acm:us-east-1:656967617759:certificate/214eea2a-beec-410c-870d-05321f23ab1e"  # Replace with your ACM certificate ARN
+}
+
 
 

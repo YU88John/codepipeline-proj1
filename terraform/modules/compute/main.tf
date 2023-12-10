@@ -114,9 +114,6 @@ resource "aws_codedeploy_deployment_group" "lab-codedeploy-deployment-group" {
 
    # Specify the load balancer and target group information - for draining during deployment
   load_balancer_info {
-    elb_info {
-      name = var.alb_name
-    }
     target_group_info {
       name = var.tg_name
     }

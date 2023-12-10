@@ -15,12 +15,4 @@ provider "aws" {
   profile = "default"
 }
 
-/*
-provider "mysql" {
-  alias   = "lab-mysql-db"
-  address = "terraform-providers/mysql"
-  required_providers = {
-  version = ">= 1.0.0"
-  }
-}
-*/
+
